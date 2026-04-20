@@ -1,113 +1,174 @@
-Projeto Gestor Bancário - CRUD Bancários e Clientes
-📘 Descrição do Projeto
-Este projeto foi desenvolvido com fins pedagógicos para alunos do Curso Profissional de Gestão e Programação de Sistemas Informáticos (GPSI) – 10.º ano.
+Projeto Gestor Bancário - CRUD Bancário e Cliente
 
-O objetivo principal é demonstrar a implementação de operações CRUD (Create, Read, Update, Delete) e o relacionamento entre entidades em Python utilizando:
+
+📘 Descrição do Projeto
 
 funções (sem classes)
-
 dicionários
+separação por ficheiros
+validação de dados
+menus em terminal
 
-separação por ficheiros (módulos)
-
-validação de dados rigorosa
-
-menus em terminal com interface colorida
-
-O projeto simula um sistema de gestão onde Bancários são responsáveis pela gestão de Clientes.
+O projeto simula a gestão de duas entidades relacionadas: Bancário e Cliente.
 
 🎯 Objetivos Pedagógicos
 Com este projeto os alunos devem aprender a:
 
-organizar código complexo em múltiplos ficheiros (modularização)
+organizar código em múltiplos ficheiros Python
+utilizar dicionários como estrutura de armazenamento
+implementar operações CRUD para múltiplas entidades
+validar dados introduzidos pelo utilizador
+gerar identificadores automáticos
+trabalhar com datas em Python
+separar lógica de negócio da interface (menu)
+relacionar entidades (cliente associado a um bancário)
 
-utilizar dicionários aninhados para armazenamento em memória
-
-implementar a lógica de relacionamento entre duas entidades (ID de Bancário em Cliente)
-
-validar dados técnicos (NIF com 9 dígitos, Email, Datas)
-
-calcular dados dinâmicos (Idade a partir da Data de Nascimento)
-
-separar a interface visual (main) da lógica de manipulação de dados
 
 📂 Estrutura do Projeto
 .
-└──gestor_bancario
-     ├── main.py        (Interface e Menus)
-     ├── bancario.py    (CRUD Bancários)
-     ├── cliente.py     (CRUD Clientes)
-     ├── utils.py       (Validações e Cálculos)
+└── gestor_bancario
+     ├── main.py
+     ├── bancario.py
+     ├── cliente.py
+     ├── utils.py
 └── README.md
 main.py
 Contém o menu interativo em terminal.
+Responsável apenas por:
 
-Responsável por:
+apresentar opções
+recolher dados do utilizador
+chamar funções dos módulos bancario e cliente
 
-Apresentar menus coloridos e organizados.
+Não contém validações.
+bancario.py
+Contém todas as operações CRUD da entidade Bancário:
 
-Recolher inputs do utilizador com validação imediata.
+criar bancário
+listar bancários
+consultar bancário
+atualizar bancário
+remover bancário
+verificar existência de bancário (existe_bancario)
 
-Encaminhar as operações para os módulos respetivos.
+Também inclui validações como:
 
-bancario.py & cliente.py
-Contêm as operações CRUD de cada entidade:
+verificação de NIF (9 dígitos)
+verificação de email
+verificação de data de nascimento
+geração automática de ID
 
-Criar: Registo com geração de ID automático.
+Os bancários são guardados num dicionário em memória.
+cliente.py
+Contém todas as operações CRUD da entidade Cliente:
 
-Listar: Exibição resumida de todos os registos.
+criar cliente
+listar clientes
+consultar cliente
+atualizar cliente
+remover cliente
 
-Consultar: Visualização detalhada de um registo específico.
+Também inclui validações como:
 
-Atualizar: Edição de campos existentes.
+verificação de idade mínima (18 anos)
+coerência entre idade e data de nascimento
+verificação de NIF, email e data
+associação obrigatória a um bancário existente
 
-Remover: Eliminação de registos do dicionário.
-
-Nota: Um Cliente só pode ser criado se for associado a um Bancário existente.
-
+Os clientes são guardados num dicionário em memória.
 utils.py
-Contém as funções de suporte lógico:
+Contém funções auxiliares partilhadas:
 
-validar_nif: Garante que tem 9 dígitos numéricos.
+geração automática de IDs para bancários (B001, B002, ...)
+geração automática de IDs para clientes (C001, C002, ...)
+validação de datas no formato YYYY-MM-DD
+validação de NIF (9 dígitos numéricos)
+validação de email (presença de @ e .)
+validação de idade (mínimo 18 anos e coerência com data de nascimento)
 
-validar_email: Verifica a presença de "@" e ".".
-
-validar_data: Valida o formato YYYY-MM-DD.
-
-calcular_idade: Calcula a idade real comparando com a data atual.
 
 👤 Estrutura das Entidades
 Bancário
-Nome, Idade, NIF, Email, Morada, Data Nascimento.
+Cada bancário contém:
 
+id_bancario (gerado automaticamente, ex: B001)
+nome
+nif
+email
+morada
+data_nascimento
+
+Exemplo:
+B001
+Nome: João Ferreira
+NIF: 123456789
+Email: joao@banco.pt
+Morada: Rua das Flores, Lisboa
+Data nascimento: 1985-06-20
 Cliente
-Nome, Idade, NIF, Email, Morada, Trabalho, Data Nascimento.
+Cada cliente contém:
 
-ID Bancário Responsável (Chave de ligação).
+id_cliente (gerado automaticamente, ex: C001)
+nome
+idade
+nif
+email
+morada
+trabalho
+data_nascimento
+bancario_id (referência ao bancário responsável)
+
+Exemplo:
+C001
+Nome: Ana Silva
+Idade: 30
+NIF: 987654321
+Email: ana@email.pt
+Morada: Av. Central, Porto
+Trabalho: Engenheira
+Data nascimento: 1994-03-12
+Bancário ID: B001
 
 ▶️ Como Executar o Projeto
-1️⃣ Certifica-te que tens todos os ficheiros na mesma pasta.
-
-2️⃣ Executa no terminal:
-
-Bash
+1️⃣ Garantir que Python está instalado
+2️⃣ Executar no terminal:
 python main.py
-3️⃣ Segue as instruções nos menus (usa as cores para identificar sucessos ou erros).
+3️⃣ Utilizar o menu apresentado:
+===== MENU PRINCIPAL =====
+1 - Gerir Bancários
+2 - Gerir Clientes
+0 - Sair
+
+⚠️ É necessário criar pelo menos um bancário antes de criar clientes, uma vez que cada cliente deve estar associado a um bancário existente.
+
+
+🔗 Relação entre Entidades
+Bancário  1 ──────── N  Cliente
+
+Um bancário pode ser responsável por vários clientes.
+Um cliente está sempre associado a exatamente um bancário.
+Ao criar ou atualizar um cliente, o sistema valida se o id_bancario fornecido existe.
+
 
 📚 Conceitos Trabalhados
-Este projeto consolida conhecimentos avançados de:
+Este projeto permite consolidar:
 
-Módulos e Importação (import).
+funções
+dicionários
+módulos Python
+importação entre ficheiros
+validação de dados
+estruturas condicionais
+ciclos (while)
+relações entre entidades
+códigos de retorno (200, 201, 400, 404)
 
-Relacionamento entre dicionários.
 
-Manipulação do módulo datetime.
+👨‍🏫 Utilização em Sala de Aula
+Este projeto vai ser usado para:
 
-Tratamento de erros e exceções (try/except).
+introdução ao CRUD com múltiplas entidades
+exercícios guiados de validação e relações
+avaliação prática
+preparação para projetos maiores
 
-Formatação de strings e estilos ANSI (Cores no terminal).
-
-📄 Licença Pedagógica
-Projeto desenvolvido exclusivamente para fins educativos no curso GPSI – 10.º ano.
-
-Pode ser reutilizado e adaptado livremente pelo professor e alunos.
