@@ -1,37 +1,53 @@
 # ==============================
-# Funções de validação e cálculo
+# utils.py
+# funções auxiliares
 # ==============================
-
 from datetime import datetime, date
 
-# Validação de idade e data de nascimento
+# contadores simples para gerar IDs automáticos
+contador_bancarios = 1
+contador_clientes = 1
+
+
+def gerar_id_bancario():
+    global contador_bancarios
+    novo_id = f"B{contador_bancarios:03d}"
+    contador_bancarios += 1
+    return novo_id
+
+
+def gerar_id_cliente():
+    global contador_clientes
+    novo_id = f"C{contador_clientes:03d}"
+    contador_clientes += 1
+    return novo_id
+
+
+# validação de data no formato YYYY-MM-DD
+def validar_data(data_texto):
+    try:
+        datetime.strptime(data_texto, "%Y-%m-%d")
+        return True
+    except ValueError:
+        return False
+
+
+# validação de NIF (9 dígitos)
+def validar_nif(nif):
+    return isinstance(nif, str) and nif.isdigit() and len(nif) == 9
+
+
+# validação de email
+def validar_email(email):
+    return "@" in email and "." in email
+
+
+# validação de idade mínima (18 anos) e coerência com data de nascimento
 def validar_idade(idade, data_nascimento):
     ano, mes, dia = map(int, data_nascimento.split("-"))
     idade_calc = date.today().year - ano - ((date.today().month, date.today().day) < (mes, dia))
     if idade < 18:
-        return False, "❌ Menor de idade. Apenas maiores de 18 anos são permitidos."
+        return False, "Menor de idade. Apenas maiores de 18 anos são permitidos."
     if idade != idade_calc:
-        return False, f"❌ Idade ({idade}) não bate com a data de nascimento ({idade_calc})."
+        return False, f"Idade ({idade}) não corresponde à data de nascimento ({idade_calc})."
     return True, ""
-
-def validar_nif(nif):
-    if isinstance(nif,str) and nif.isdigit() and len(nif)==9:
-        return True, ""
-    return False, "❌ NIF inválido."
-
-def validar_email(email):
-    if "@" in email and "." in email:
-        return True, ""
-    return False, "❌ Email inválido."
-
-def validar_data(data):
-    try:
-        datetime.strptime(data, "%Y-%m-%d")
-        return True, ""
-    except:
-        return False, "❌ Data inválida, use YYYY-MM-DD."
-
-def calcular_idade(data_nascimento):
-    ano, mes, dia = map(int, data_nascimento.split("-"))
-    idade_calc = date.today().year - ano - ((date.today().month, date.today().day) < (mes, dia))
-    return idade_calc
