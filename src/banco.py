@@ -1,4 +1,4 @@
-from utils import gerar_id_banco, validar_email
+from utils import gerar_id_banco, validar_email , validar_nib
 
 bancos = {}
 
