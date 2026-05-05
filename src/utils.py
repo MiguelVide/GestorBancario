@@ -50,6 +50,10 @@ def validar_nib(nib):
     return isinstance(nib, str) and nib.isdigit() and len(nib) == 21
 
 
+def validar_tipo_conta(tipo):
+    return tipo in ("corrente", "poupança")
+
+
 def validar_email(email):
     partes = email.split("@")
     return len(partes) == 2 and "." in partes[1] and len(partes[1]) > 2
