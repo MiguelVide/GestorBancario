@@ -1,4 +1,4 @@
-from utils import gerar_id_conta
+from utils import gerar_id_conta , validar_tipo_conta
 
 contas = {}
 
