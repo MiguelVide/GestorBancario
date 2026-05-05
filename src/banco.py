@@ -90,7 +90,3 @@ def remover_banco(id_banco):
 # AUX
 def existe_banco(id_banco):
     return id_banco in bancos
-
-
-def validar_nib(nib):
-    return isinstance(nib, str) and nib.isdigit() and len(nib) == 21
