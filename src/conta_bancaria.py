@@ -77,6 +77,3 @@ def remover_conta(id_conta):
 def existe_conta(id_conta):
     return id_conta in contas
 
-
-def validar_tipo_conta(tipo):
-    return tipo in ("corrente", "poupança")
