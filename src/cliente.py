@@ -1,15 +1,17 @@
-from utils import gerar_id_cliente, validar_data, validar_nif, validar_email, validar_idade
+from utils import (
+    gerar_id_cliente,
+    validar_data,
+    validar_nif,
+    validar_email
+)
 
 clientes = {}
 
 # CREATE
-def criar_cliente(nome, idade, nif, email, morada, trabalho, data_nascimento, id_bancario):
+def criar_cliente(nome, nif, email, morada, trabalho, data_nascimento, id_bancario):
+
     if not validar_data(data_nascimento):
         return 400, "Data inválida. Utilize formato YYYY-MM-DD."
-
-    valido, msg = validar_idade(idade, data_nascimento)
-    if not valido:
-        return 400, msg
 
     if not validar_nif(nif):
         return 400, "NIF inválido. Deve conter 9 dígitos."
@@ -22,7 +24,6 @@ def criar_cliente(nome, idade, nif, email, morada, trabalho, data_nascimento, id
     cliente = {
         "id": id_cliente,
         "nome": nome,
-        "idade": idade,
         "nif": nif,
         "email": email,
         "morada": morada,
@@ -49,38 +50,47 @@ def consultar_cliente(id_cliente):
 
 
 # UPDATE
-def atualizar_cliente(id_cliente, nome=None, idade=None, nif=None, email=None, morada=None, trabalho=None, data_nascimento=None, id_bancario=None):
+def atualizar_cliente(
+    id_cliente,
+    nome=None,
+    nif=None,
+    email=None,
+    morada=None,
+    trabalho=None,
+    data_nascimento=None,
+    id_bancario=None
+):
+
     if id_cliente not in clientes:
         return 404, "Cliente não encontrado."
 
     if data_nascimento:
         if not validar_data(data_nascimento):
             return 400, "Data inválida. Utilize formato YYYY-MM-DD."
-        clientes[id_cliente]["data_nascimento"] = data_nascimento
 
-    if idade:
-        data_nasc_atual = clientes[id_cliente]["data_nascimento"]
-        valido, msg = validar_idade(idade, data_nasc_atual)
-        if not valido:
-            return 400, msg
-        clientes[id_cliente]["idade"] = idade
+        clientes[id_cliente]["data_nascimento"] = data_nascimento
 
     if nif:
         if not validar_nif(nif):
             return 400, "NIF inválido. Deve conter 9 dígitos."
+
         clientes[id_cliente]["nif"] = nif
 
     if email:
         if not validar_email(email):
             return 400, "Email inválido."
+
         clientes[id_cliente]["email"] = email
 
     if nome:
         clientes[id_cliente]["nome"] = nome
+
     if morada:
         clientes[id_cliente]["morada"] = morada
+
     if trabalho:
         clientes[id_cliente]["trabalho"] = trabalho
+
     if id_bancario:
         clientes[id_cliente]["bancario_id"] = id_bancario
 
@@ -89,8 +99,10 @@ def atualizar_cliente(id_cliente, nome=None, idade=None, nif=None, email=None, m
 
 # DELETE
 def remover_cliente(id_cliente):
+
     if id_cliente not in clientes:
         return 404, "Cliente não encontrado."
 
     del clientes[id_cliente]
+
     return 200, f"Cliente {id_cliente} removido."
