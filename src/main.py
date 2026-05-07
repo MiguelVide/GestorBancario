@@ -85,6 +85,16 @@ def menu_contas():
 
 
 # ==============================
+# FUNÇÃO AUXILIAR (NOVA)
+# ==============================
+def mostrar_opcoes_ids(dados, tipo):
+    print(f"\n--- {tipo} disponíveis ---")
+    for id_, info in dados.items():
+        print(f"ID: {id_} | Nome: {info['nome']}")
+    print("--------------------------\n")
+
+
+# ==============================
 # BANCÁRIOS
 # ==============================
 def gerir_bancarios():
@@ -101,67 +111,60 @@ def gerir_bancarios():
 
             code, obj = criar_bancario(nome, nif, email, morada, data_nascimento)
 
-            if code == 201:
-                print("Bancário criado com sucesso.")
-                print(obj)
-            else:
-                print("Erro:", obj)
+            print("✔ Criado" if code == 201 else "Erro:", obj)
 
         elif opcao == "2":
             code, obj = listar_bancarios()
 
             if code == 200:
-                for id_b, dados in obj.items():
-                    print(f"ID: {id_b} | Nome: {dados['nome']} | NIF: {dados['nif']} | Email: {dados['email']} | Morada: {dados['morada']} | Data Nascimento: {dados['data_nascimento']}")
+                for id_b, d in obj.items():
+                    print(f"{id_b} | {d['nome']} | {d['email']}")
             else:
-                print("Erro:", obj)
+                print(obj)
 
         elif opcao == "3":
+            bancarios = listar_bancarios()[1]
+            if isinstance(bancarios, dict):
+                mostrar_opcoes_ids(bancarios, "Bancários")
+
             id_b = input("ID do bancário: ")
             code, obj = consultar_bancario(id_b)
-
-            if code == 200:
-                print(obj[id_b])
-                print("Bancário consultado com sucesso.")
-            else:
-                print("Erro:", obj)
+            print(obj)
 
         elif opcao == "4":
+            bancarios = listar_bancarios()[1]
+            if isinstance(bancarios, dict):
+                mostrar_opcoes_ids(bancarios, "Bancários")
+
             id_b = input("ID do bancário: ")
 
-            nome = input("Novo nome (enter para manter): ")
-            nif = input("Novo NIF (enter para manter): ")
-            email = input("Novo email (enter para manter): ")
-            morada = input("Nova morada (enter para manter): ")
-            data_nascimento = input("Nova data nascimento YYYY-MM-DD (enter para manter): ")
+            nome = input("Nome: ")
+            nif = input("NIF: ")
+            email = input("Email: ")
+            morada = input("Morada: ")
+            data_nascimento = input("Data nascimento: ")
 
             code, obj = atualizar_bancario(
                 id_b,
-                nome if nome else None,
-                nif if nif else None,
-                email if email else None,
-                morada if morada else None,
-                data_nascimento if data_nascimento else None
+                nome or None,
+                nif or None,
+                email or None,
+                morada or None,
+                data_nascimento or None
             )
 
-            if code == 200:
-                print("Bancário atualizado com sucesso.")
-            else:
-                print("Erro:", obj)
+            print(obj)
 
         elif opcao == "5":
-            id_b = input("ID do bancário: ")
-            code, obj = remover_bancario(id_b)
+            bancarios = listar_bancarios()[1]
+            if isinstance(bancarios, dict):
+                mostrar_opcoes_ids(bancarios, "Bancários")
 
-            if code == 200:
-                print(obj)
-            else:
-                print("Erro:", obj)
+            id_b = input("ID do bancário: ")
+            print(remover_bancario(id_b)[1])
 
         elif opcao == "0":
             break
-        else:
-            print("Opção inválida.")
 
 
 # ==============================
@@ -173,99 +176,66 @@ def gerir_clientes():
         opcao = input("Escolha uma opção: ")
 
         if opcao == "1":
-            code, obj = listar_bancarios()
+            bancarios = listar_bancarios()[1]
+            if isinstance(bancarios, dict):
+                mostrar_opcoes_ids(bancarios, "Bancários")
 
-            if code != 200:
-                print("Não existem bancários. Crie primeiro.")
-                continue
-
-            id_b = input("ID do bancário responsável: ")
-
-            if not bancario.existe_bancario(id_b):
-                print("Erro: ID de bancário inválido.")
-                continue
+            id_b = input("ID bancário responsável: ")
 
             nome = input("Nome: ")
-            idade = int(input("Idade: "))
             nif = input("NIF: ")
             email = input("Email: ")
             morada = input("Morada: ")
             trabalho = input("Trabalho: ")
-            data_nascimento = input("Data nascimento (YYYY-MM-DD): ")
+            data_nascimento = input("Data nascimento: ")
 
-            code, obj = criar_cliente(nome, idade, nif, email, morada, trabalho, data_nascimento, id_b)
-
-            if code == 201:
-                print("Cliente criado com sucesso.")
-                print(obj)
-            else:
-                print("Erro:", obj)
+            print(criar_cliente(nome, nif, email, morada, trabalho, data_nascimento, id_b)[1])
 
         elif opcao == "2":
-            code, obj = listar_clientes()
+            clientes = listar_clientes()[1]
 
-            if code == 200:
-                for id_c, dados in obj.items():
-                    print(f"ID: {id_c} | Nome: {dados['nome']} | Idade: {dados['idade']} | NIF: {dados['nif']} | Email: {dados['email']} | Trabalho: {dados['trabalho']} | Data Nascimento: {dados['data_nascimento']} | Bancário ID: {dados['bancario_id']}")
+            if isinstance(clientes, dict):
+                for id_c, d in clientes.items():
+                    print(f"{id_c} | {d['nome']}")
             else:
-                print("Erro:", obj)
+                print(clientes)
 
         elif opcao == "3":
-            id_c = input("ID do cliente: ")
-            code, obj = consultar_cliente(id_c)
+            clientes = listar_clientes()[1]
+            if isinstance(clientes, dict):
+                mostrar_opcoes_ids(clientes, "Clientes")
 
-            if code == 200:
-                print(obj[id_c])
-                print("Cliente consultado com sucesso.")
-            else:
-                print("Erro:", obj)
+            id_c = input("ID cliente: ")
+            print(consultar_cliente(id_c)[1])
 
         elif opcao == "4":
-            id_c = input("ID do cliente: ")
+            clientes = listar_clientes()[1]
+            if isinstance(clientes, dict):
+                mostrar_opcoes_ids(clientes, "Clientes")
 
-            nome = input("Novo nome (enter para manter): ")
-            idade_str = input("Nova idade (enter para manter): ")
-            nif = input("Novo NIF (enter para manter): ")
-            email = input("Novo email (enter para manter): ")
-            morada = input("Nova morada (enter para manter): ")
-            trabalho = input("Novo trabalho (enter para manter): ")
-            data_nascimento = input("Nova data nascimento YYYY-MM-DD (enter para manter): ")
-            id_b = input("Novo ID bancário (enter para manter): ")
+            id_c = input("ID cliente: ")
 
-            if id_b and not bancario.existe_bancario(id_b):
-                print("Erro: ID de bancário inválido.")
-                continue
-
-            code, obj = atualizar_cliente(
+            print(atualizar_cliente(
                 id_c,
-                nome if nome else None,
-                int(idade_str) if idade_str else None,
-                nif if nif else None,
-                email if email else None,
-                morada if morada else None,
-                trabalho if trabalho else None,
-                data_nascimento if data_nascimento else None,
-                id_b if id_b else None
-            )
-
-            if code == 200:
-                print("Cliente atualizado com sucesso.")
-            else:
-                print("Erro:", obj)
+                input("Nome: ") or None,
+                input("NIF: ") or None,
+                input("Email: ") or None,
+                input("Morada: ") or None,
+                input("Trabalho: ") or None,
+                input("Data nascimento: ") or None,
+                input("ID bancário: ") or None
+            )[1])
 
         elif opcao == "5":
-            id_c = input("ID do cliente: ")
-            code, obj = remover_cliente(id_c)
+            clientes = listar_clientes()[1]
+            if isinstance(clientes, dict):
+                mostrar_opcoes_ids(clientes, "Clientes")
 
-            if code == 200:
-                print(obj)
-            else:
-                print("Erro:", obj)
+            id_c = input("ID cliente: ")
+            print(remover_cliente(id_c)[1])
 
         elif opcao == "0":
             break
-        else:
-            print("Opção inválida.")
 
 
 # ==============================
@@ -277,88 +247,58 @@ def gerir_bancos():
         opcao = input("Escolha uma opção: ")
 
         if opcao == "1":
-            nome = input("Nome do banco: ")
-            nib = input("NIB (21 dígitos): ")
+            nome = input("Nome: ")
             email = input("Email: ")
             morada = input("Morada: ")
             telefone = input("Telefone: ")
 
-            code, obj = criar_banco(nome, nib, email, morada, telefone)
-
-            if code == 201:
-                print("Banco criado com sucesso.")
-                print(obj)
-            else:
-                print("Erro:", obj)
+            print(criar_banco(nome, email, morada, telefone)[1])
 
         elif opcao == "2":
-            code, obj = listar_bancos()
-
-            if code == 200:
-                for id_bn, dados in obj.items():
-                    print(f"ID: {id_bn} | Nome: {dados['nome']} | NIB: {dados['nib']} | Email: {dados['email']} | Morada: {dados['morada']} | Telefone: {dados['telefone']}")
+            bancos = listar_bancos()[1]
+            if isinstance(bancos, dict):
+                for id_b, d in bancos.items():
+                    print(f"{id_b} | {d['nome']}")
             else:
-                print("Erro:", obj)
+                print(bancos)
 
         elif opcao == "3":
-            id_bn = input("ID do banco: ")
-            code, obj = consultar_banco(id_bn)
+            bancos = listar_bancos()[1]
+            if isinstance(bancos, dict):
+                mostrar_opcoes_ids(bancos, "Bancos")
 
-            if code == 200:
-                print(obj[id_bn])
-                print("Banco consultado com sucesso.")
-            else:
-                print("Erro:", obj)
+            id_bn = input("ID banco: ")
+            print(consultar_banco(id_bn)[1])
 
         elif opcao == "4":
-            id_bn = input("ID do banco: ")
+            bancos = listar_bancos()[1]
+            if isinstance(bancos, dict):
+                mostrar_opcoes_ids(bancos, "Bancos")
 
-            nome = input("Novo nome (enter para manter): ")
-            nib = input("Novo NIB (enter para manter): ")
-            email = input("Novo email (enter para manter): ")
-            morada = input("Nova morada (enter para manter): ")
-            telefone = input("Novo telefone (enter para manter): ")
+            id_bn = input("ID banco: ")
 
-            code, obj = atualizar_banco(
+            print(atualizar_banco(
                 id_bn,
-                nome if nome else None,
-                nib if nib else None,
-                email if email else None,
-                morada if morada else None,
-                telefone if telefone else None
-            )
-
-            if code == 200:
-                print("Banco atualizado com sucesso.")
-            else:
-                print("Erro:", obj)
+                input("Nome: ") or None,
+                input("Email: ") or None,
+                input("Morada: ") or None,
+                input("Telefone: ") or None
+            )[1])
 
         elif opcao == "5":
-            id_bn = input("ID do banco: ")
+            bancos = listar_bancos()[1]
+            if isinstance(bancos, dict):
+                mostrar_opcoes_ids(bancos, "Bancos")
 
-            # Verificar se existem contas associadas antes de remover
-            code_c, obj_c = listar_contas()
-            if code_c == 200:
-                associadas = [c for c in obj_c.values() if c["id_banco"] == id_bn]
-                if associadas:
-                    print(f"Erro: existem {len(associadas)} conta(s) associada(s) a este banco. Remova-as primeiro.")
-                    continue
-
-            code, obj = remover_banco(id_bn)
-
-            if code == 200:
-                print(obj)
-            else:
-                print("Erro:", obj)
+            id_bn = input("ID banco: ")
+            print(remover_banco(id_bn)[1])
 
         elif opcao == "0":
             break
-        else:
-            print("Opção inválida.")
 
 
 # ==============================
-# CONTAS BANCÁRIAS
+# CONTAS
 # ==============================
 def gerir_contas():
     while True:
@@ -366,117 +306,65 @@ def gerir_contas():
         opcao = input("Escolha uma opção: ")
 
         if opcao == "1":
-            code_c, _ = listar_clientes()
-            if code_c != 200:
-                print("Não existem clientes. Crie primeiro.")
-                continue
+            clientes = listar_clientes()[1]
+            if isinstance(clientes, dict):
+                mostrar_opcoes_ids(clientes, "Clientes")
 
-            code_b, _ = listar_bancos()
-            if code_b != 200:
-                print("Não existem bancos. Crie primeiro.")
-                continue
+            id_c = input("ID cliente: ")
 
-            id_c = input("ID do cliente: ")
-            code_cc, _ = consultar_cliente(id_c)
-            if code_cc != 200:
-                print("Erro: ID de cliente inválido.")
-                continue
+            bancos = listar_bancos()[1]
+            if isinstance(bancos, dict):
+                mostrar_opcoes_ids(bancos, "Bancos")
 
-            id_bn = input("ID do banco: ")
-            if not existe_banco(id_bn):
-                print("Erro: ID de banco inválido.")
-                continue
+            id_b = input("ID banco: ")
 
-            print("Tipo de conta: corrente / poupança")
-            tipo = input("Tipo: ").strip().lower()
-            saldo_str = input("Saldo inicial: ")
+            tipo = input("Tipo: ")
+            saldo = float(input("Saldo: "))
 
-            try:
-                saldo = float(saldo_str)
-            except ValueError:
-                print("Erro: saldo inválido.")
-                continue
-
-            code, obj = criar_conta(tipo, saldo, id_c, id_bn)
-
-            if code == 201:
-                print("Conta criada com sucesso.")
-                print(obj)
-            else:
-                print("Erro:", obj)
+            print(criar_conta(tipo, saldo, id_c, id_b)[1])
 
         elif opcao == "2":
-            code, obj = listar_contas()
+            contas = listar_contas()[1]
 
-            if code == 200:
-                for id_ct, dados in obj.items():
-                    print(f"ID: {id_ct} | Tipo: {dados['tipo']} | Saldo: {dados['saldo']:.2f}€ | Cliente ID: {dados['id_cliente']} | Banco ID: {dados['id_banco']}")
+            if isinstance(contas, dict):
+                for id_ct, d in contas.items():
+                    print(f"{id_ct} | {d['tipo']} | {d['saldo']}")
             else:
-                print("Erro:", obj)
+                print(contas)
 
         elif opcao == "3":
-            id_ct = input("ID da conta: ")
-            code, obj = consultar_conta(id_ct)
+            contas = listar_contas()[1]
+            if isinstance(contas, dict):
+                mostrar_opcoes_ids(contas, "Contas")
 
-            if code == 200:
-                print(obj[id_ct])
-                print("Conta consultada com sucesso.")
-            else:
-                print("Erro:", obj)
+            id_ct = input("ID conta: ")
+            print(consultar_conta(id_ct)[1])
 
         elif opcao == "4":
-            id_ct = input("ID da conta: ")
+            contas = listar_contas()[1]
+            if isinstance(contas, dict):
+                mostrar_opcoes_ids(contas, "Contas")
 
-            tipo = input("Novo tipo corrente/poupança (enter para manter): ").strip().lower()
-            saldo_str = input("Novo saldo (enter para manter): ")
-            id_c = input("Novo ID cliente (enter para manter): ")
-            id_bn = input("Novo ID banco (enter para manter): ")
+            id_ct = input("ID conta: ")
 
-            if id_c:
-                from cliente import consultar_cliente as cc
-                code_cc, _ = cc(id_c)
-                if code_cc != 200:
-                    print("Erro: ID de cliente inválido.")
-                    continue
-
-            if id_bn and not existe_banco(id_bn):
-                print("Erro: ID de banco inválido.")
-                continue
-
-            saldo = None
-            if saldo_str:
-                try:
-                    saldo = float(saldo_str)
-                except ValueError:
-                    print("Erro: saldo inválido.")
-                    continue
-
-            code, obj = atualizar_conta(
+            print(atualizar_conta(
                 id_ct,
-                tipo if tipo else None,
-                saldo,
-                id_c if id_c else None,
-                id_bn if id_bn else None
-            )
-
-            if code == 200:
-                print("Conta atualizada com sucesso.")
-            else:
-                print("Erro:", obj)
+                input("Tipo: ") or None,
+                input("Saldo: ") or None,
+                input("ID cliente: ") or None,
+                input("ID banco: ") or None
+            )[1])
 
         elif opcao == "5":
-            id_ct = input("ID da conta: ")
-            code, obj = remover_conta(id_ct)
+            contas = listar_contas()[1]
+            if isinstance(contas, dict):
+                mostrar_opcoes_ids(contas, "Contas")
 
-            if code == 200:
-                print(obj)
-            else:
-                print("Erro:", obj)
+            id_ct = input("ID conta: ")
+            print(remover_conta(id_ct)[1])
 
         elif opcao == "0":
             break
-        else:
-            print("Opção inválida.")
 
 
 # ==============================
@@ -485,7 +373,7 @@ def gerir_contas():
 def main():
     while True:
         menu_principal()
-        opcao = input("Escolha uma opção: ")
+        opcao = input("Escolha: ")
 
         if opcao == "1":
             gerir_bancarios()
@@ -496,10 +384,7 @@ def main():
         elif opcao == "4":
             gerir_contas()
         elif opcao == "0":
-            print("A sair...")
             break
-        else:
-            print("Opção inválida.")
 
 
 if __name__ == "__main__":
