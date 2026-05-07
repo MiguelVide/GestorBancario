@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import datetime
 
 contador_bancarios = 1
 contador_clientes = 1
@@ -57,18 +57,3 @@ def validar_tipo_conta(tipo):
 def validar_email(email):
     partes = email.split("@")
     return len(partes) == 2 and "." in partes[1] and len(partes[1]) > 2
-
-
-def validar_idade(idade, data_nascimento):
-    ano, mes, dia = map(int, data_nascimento.split("-"))
-
-    hoje = date.today()
-    idade_calc = hoje.year - ano - ((hoje.month, hoje.day) < (mes, dia))
-
-    if idade < 18:
-        return False, "Menor de idade. Apenas maiores de 18 anos são permitidos."
-
-    if idade != idade_calc:
-        return False, f"Idade ({idade}) não corresponde à data de nascimento ({idade_calc})."
-
-    return True, ""
