@@ -70,10 +70,9 @@ def remover_conta(id_conta):
         return 404, "Conta não encontrada."
 
     del contas[id_conta]
-    return 200, {id_conta} 
+    return 200, {id_conta}
 
 
 # AUX
 def existe_conta(id_conta):
     return id_conta in contas
-
