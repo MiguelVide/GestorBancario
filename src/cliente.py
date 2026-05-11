@@ -1,3 +1,6 @@
+import json
+import os
+
 from utils import (
     gerar_id_cliente,
     validar_data,
@@ -5,10 +8,32 @@ from utils import (
     validar_email
 )
 
+FICHEIRO_CLIENTES = "clientes.json"
+
 clientes = {}
+
+
+# ==========================
+# Persistência
+# ==========================
+def guardar_clientes():
+    with open(FICHEIRO_CLIENTES, "w", encoding="utf-8") as ficheiro:
+        json.dump(clientes, ficheiro, indent=4, ensure_ascii=False)
+
+
+def carregar_clientes():
+    global clientes
+
+    if os.path.exists(FICHEIRO_CLIENTES):
+        with open(FICHEIRO_CLIENTES, "r", encoding="utf-8") as ficheiro:
+            clientes = json.load(ficheiro)
+    else:
+        clientes = {}
+
 
 # CREATE
 def criar_cliente(nome, nif, email, morada, trabalho, data_nascimento, id_bancario):
+    carregar_clientes()
 
     if not validar_data(data_nascimento):
         return 400, "Data inválida. Utilize formato YYYY-MM-DD."
@@ -33,17 +58,22 @@ def criar_cliente(nome, nif, email, morada, trabalho, data_nascimento, id_bancar
     }
 
     clientes[id_cliente] = cliente
+    guardar_clientes()
     return 201, cliente
 
 
 # READ
 def listar_clientes():
+    carregar_clientes()
+
     if not clientes:
         return 404, "Não existem clientes registados."
     return 200, clientes
 
 
 def consultar_cliente(id_cliente):
+    carregar_clientes()
+
     if id_cliente not in clientes:
         return 404, "Cliente não encontrado."
     return 200, {id_cliente: clientes[id_cliente]}
@@ -60,6 +90,7 @@ def atualizar_cliente(
     data_nascimento=None,
     id_bancario=None
 ):
+    carregar_clientes()
 
     if id_cliente not in clientes:
         return 404, "Cliente não encontrado."
@@ -94,15 +125,18 @@ def atualizar_cliente(
     if id_bancario:
         clientes[id_cliente]["bancario_id"] = id_bancario
 
+    guardar_clientes()
     return 200, clientes[id_cliente]
 
 
 # DELETE
 def remover_cliente(id_cliente):
+    carregar_clientes()
 
     if id_cliente not in clientes:
         return 404, "Cliente não encontrado."
 
     del clientes[id_cliente]
+    guardar_clientes()
 
     return 200, f"Cliente {id_cliente} removido."
