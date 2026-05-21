@@ -5,7 +5,8 @@ from utils import (
     gerar_id_cliente,
     validar_data,
     validar_nif,
-    validar_email
+    validar_email,
+    logger
 )
 
 FICHEIRO_CLIENTES = "clientes.json"
@@ -36,12 +37,15 @@ def criar_cliente(nome, nif, email, morada, trabalho, data_nascimento, id_bancar
     carregar_clientes()
 
     if not validar_data(data_nascimento):
+        logger.error(f"Tentativa de criar cliente com data inválida: '{data_nascimento}'")
         return 400, "Data inválida. Utilize formato YYYY-MM-DD."
 
     if not validar_nif(nif):
+        logger.error(f"Tentativa de criar cliente com NIF inválido: '{nif}'")
         return 400, "NIF inválido. Deve conter 9 dígitos."
 
     if not validar_email(email):
+        logger.error(f"Tentativa de criar cliente com email inválido: '{email}'")
         return 400, "Email inválido."
 
     id_cliente = gerar_id_cliente()
@@ -59,6 +63,7 @@ def criar_cliente(nome, nif, email, morada, trabalho, data_nascimento, id_bancar
 
     clientes[id_cliente] = cliente
     guardar_clientes()
+    logger.info(f"Cliente criado: ID={id_cliente} | Nome={nome} | Bancário responsável={id_bancario}")
     return 201, cliente
 
 
@@ -67,7 +72,9 @@ def listar_clientes():
     carregar_clientes()
 
     if not clientes:
+        logger.debug("Listagem de clientes: nenhum registo encontrado.")
         return 404, "Não existem clientes registados."
+    logger.debug(f"Listagem de clientes: {len(clientes)} registo(s) encontrado(s).")
     return 200, clientes
 
 
@@ -75,7 +82,9 @@ def consultar_cliente(id_cliente):
     carregar_clientes()
 
     if id_cliente not in clientes:
+        logger.warning(f"Consulta de cliente falhou: ID '{id_cliente}' não encontrado.")
         return 404, "Cliente não encontrado."
+    logger.info(f"Cliente consultado: ID={id_cliente}")
     return 200, {id_cliente: clientes[id_cliente]}
 
 
@@ -93,22 +102,26 @@ def atualizar_cliente(
     carregar_clientes()
 
     if id_cliente not in clientes:
+        logger.warning(f"Tentativa de atualizar cliente inexistente: ID '{id_cliente}'")
         return 404, "Cliente não encontrado."
 
     if data_nascimento:
         if not validar_data(data_nascimento):
+            logger.error(f"Atualização de cliente ID={id_cliente}: data inválida '{data_nascimento}'")
             return 400, "Data inválida. Utilize formato YYYY-MM-DD."
 
         clientes[id_cliente]["data_nascimento"] = data_nascimento
 
     if nif:
         if not validar_nif(nif):
+            logger.error(f"Atualização de cliente ID={id_cliente}: NIF inválido '{nif}'")
             return 400, "NIF inválido. Deve conter 9 dígitos."
 
         clientes[id_cliente]["nif"] = nif
 
     if email:
         if not validar_email(email):
+            logger.error(f"Atualização de cliente ID={id_cliente}: email inválido '{email}'")
             return 400, "Email inválido."
 
         clientes[id_cliente]["email"] = email
@@ -126,6 +139,7 @@ def atualizar_cliente(
         clientes[id_cliente]["bancario_id"] = id_bancario
 
     guardar_clientes()
+    logger.info(f"Cliente atualizado: ID={id_cliente}")
     return 200, clientes[id_cliente]
 
 
@@ -134,9 +148,10 @@ def remover_cliente(id_cliente):
     carregar_clientes()
 
     if id_cliente not in clientes:
+        logger.warning(f"Tentativa de remover cliente inexistente: ID '{id_cliente}'")
         return 404, "Cliente não encontrado."
 
     del clientes[id_cliente]
     guardar_clientes()
-
+    logger.info(f"Cliente removido: ID={id_cliente}")
     return 200, f"Cliente {id_cliente} removido."

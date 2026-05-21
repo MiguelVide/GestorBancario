@@ -1,5 +1,27 @@
+import logging
+import os
 from datetime import datetime
 
+# ==========================================================
+# CONFIGURAÇÃO DO LOGGING
+# ==========================================================
+LOG_DIR = "logs"
+os.makedirs(LOG_DIR, exist_ok=True)
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s | %(levelname)-8s | %(message)s',
+    handlers=[
+        logging.FileHandler(f'{LOG_DIR}/gestor.log', encoding='utf-8'),
+        logging.StreamHandler()
+    ]
+)
+
+logger = logging.getLogger('gestor')
+
+# ==========================================================
+# CONTADORES DE IDs
+# ==========================================================
 contador_bancarios = 1
 contador_clientes = 1
 contador_bancos = 1
@@ -34,6 +56,9 @@ def gerar_id_conta():
     return novo_id
 
 
+# ==========================================================
+# VALIDAÇÕES
+# ==========================================================
 def validar_data(data_texto):
     try:
         datetime.strptime(data_texto, "%Y-%m-%d")
