@@ -31,7 +31,7 @@ def criar_banco(nome, email, morada, telefone):
     carregar_bancos()
 
     if not validar_email(email):
-        logger.warning(f"Tentativa de criar banco com email inválido: '{email}'")
+        logger.error(f"Tentativa de criar banco com email inválido: '{email}'")
         return 400, "Email inválido."
 
     if any(b["email"] == email for b in bancos.values()):
@@ -85,7 +85,7 @@ def atualizar_banco(id_banco, nome=None, email=None, morada=None, telefone=None)
 
     if email:
         if not validar_email(email):
-            logger.warning(f"Atualização de banco ID={id_banco}: email inválido '{email}'")
+            logger.error(f"Atualização de banco ID={id_banco}: email inválido '{email}'")
             return 400, "Email inválido."
 
         if any(b["email"] == email and b["id"] != id_banco for b in bancos.values()):
