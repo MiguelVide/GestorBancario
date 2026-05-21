@@ -31,13 +31,13 @@ def criar_bancario(nome, nif, email, morada, data_nascimento):
     carregar_bancarios()
 
     if not validar_data(data_nascimento):
-        logger.warning(f"Tentativa de criar bancário com data inválida: '{data_nascimento}'")
+        logger.error(f"Tentativa de criar bancário com data inválida: '{data_nascimento}'")
         return 400, "Data inválida. Utilize formato YYYY-MM-DD."
     if not validar_nif(nif):
-        logger.warning(f"Tentativa de criar bancário com NIF inválido: '{nif}'")
+        logger.error(f"Tentativa de criar bancário com NIF inválido: '{nif}'")
         return 400, "NIF inválido. Deve conter 9 dígitos."
     if not validar_email(email):
-        logger.warning(f"Tentativa de criar bancário com email inválido: '{email}'")
+        logger.error(f"Tentativa de criar bancário com email inválido: '{email}'")
         return 400, "Email inválido."
 
     id_bancario = gerar_id_bancario()
@@ -88,19 +88,19 @@ def atualizar_bancario(id_bancario, nome=None, nif=None, email=None, morada=None
 
     if data_nascimento:
         if not validar_data(data_nascimento):
-            logger.warning(f"Atualização de bancário ID={id_bancario}: data inválida '{data_nascimento}'")
+            logger.error(f"Atualização de bancário ID={id_bancario}: data inválida '{data_nascimento}'")
             return 400, "Data inválida. Utilize formato YYYY-MM-DD."
         bancarios[id_bancario]["data_nascimento"] = data_nascimento
 
     if nif:
         if not validar_nif(nif):
-            logger.warning(f"Atualização de bancário ID={id_bancario}: NIF inválido '{nif}'")
+            logger.error(f"Atualização de bancário ID={id_bancario}: NIF inválido '{nif}'")
             return 400, "NIF inválido. Deve conter 9 dígitos."
         bancarios[id_bancario]["nif"] = nif
 
     if email:
         if not validar_email(email):
-            logger.warning(f"Atualização de bancário ID={id_bancario}: email inválido '{email}'")
+            logger.error(f"Atualização de bancário ID={id_bancario}: email inválido '{email}'")
             return 400, "Email inválido."
         bancarios[id_bancario]["email"] = email
 
