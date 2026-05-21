@@ -32,6 +32,8 @@ from conta_bancaria import (
     remover_conta
 )
 
+from utils import logger
+
 # ==============================
 # MENUS
 # ==============================
@@ -98,6 +100,7 @@ def mostrar_opcoes_ids(dados, tipo):
 # BANCÁRIOS
 # ==============================
 def gerir_bancarios():
+    logger.debug("Acesso ao menu de bancários.")
     while True:
         menu_bancarios()
         opcao = input("Escolha uma opção: ")
@@ -164,6 +167,7 @@ def gerir_bancarios():
             print(remover_bancario(id_b)[1])
 
         elif opcao == "0":
+            logger.debug("Saída do menu de bancários.")
             break
 
 
@@ -171,6 +175,7 @@ def gerir_bancarios():
 # CLIENTES
 # ==============================
 def gerir_clientes():
+    logger.debug("Acesso ao menu de clientes.")
     while True:
         menu_clientes()
         opcao = input("Escolha uma opção: ")
@@ -235,6 +240,7 @@ def gerir_clientes():
             print(remover_cliente(id_c)[1])
 
         elif opcao == "0":
+            logger.debug("Saída do menu de clientes.")
             break
 
 
@@ -242,6 +248,7 @@ def gerir_clientes():
 # BANCOS
 # ==============================
 def gerir_bancos():
+    logger.debug("Acesso ao menu de bancos.")
     while True:
         menu_bancos()
         opcao = input("Escolha uma opção: ")
@@ -294,6 +301,7 @@ def gerir_bancos():
             print(remover_banco(id_bn)[1])
 
         elif opcao == "0":
+            logger.debug("Saída do menu de bancos.")
             break
 
 
@@ -301,6 +309,7 @@ def gerir_bancos():
 # CONTAS
 # ==============================
 def gerir_contas():
+    logger.debug("Acesso ao menu de contas bancárias.")
     while True:
         menu_contas()
         opcao = input("Escolha uma opção: ")
@@ -364,6 +373,7 @@ def gerir_contas():
             print(remover_conta(id_ct)[1])
 
         elif opcao == "0":
+            logger.debug("Saída do menu de contas bancárias.")
             break
 
 
@@ -371,6 +381,7 @@ def gerir_contas():
 # MAIN
 # ==============================
 def main():
+    logger.info("=== Sistema iniciado ===")
     while True:
         menu_principal()
         opcao = input("Escolha: ")
@@ -384,6 +395,7 @@ def main():
         elif opcao == "4":
             gerir_contas()
         elif opcao == "0":
+            logger.info("=== Sistema encerrado pelo utilizador ===")
             break
 
 
