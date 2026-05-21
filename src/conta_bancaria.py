@@ -31,11 +31,11 @@ def criar_conta(tipo, saldo_inicial, id_cliente, id_banco):
     carregar_contas()
 
     if not validar_tipo_conta(tipo):
-        logger.warning(f"Tentativa de criar conta com tipo inválido: '{tipo}'")
+        logger.error(f"Tentativa de criar conta com tipo inválido: '{tipo}'")
         return 400, "Tipo de conta inválido. Use 'corrente' ou 'poupança'."
 
     if not isinstance(saldo_inicial, (int, float)) or saldo_inicial < 0:
-        logger.warning(f"Tentativa de criar conta com saldo inválido: '{saldo_inicial}'")
+        logger.error(f"Tentativa de criar conta com saldo inválido: '{saldo_inicial}'")
         return 400, "Saldo inicial inválido. Deve ser um valor numérico não negativo."
 
     id_conta = gerar_id_conta()
@@ -85,12 +85,12 @@ def atualizar_conta(id_conta, tipo=None, saldo=None, id_cliente=None, id_banco=N
 
     # Validar tudo antes de guardar
     if tipo and not validar_tipo_conta(tipo):
-        logger.warning(f"Atualização de conta ID={id_conta}: tipo inválido '{tipo}'")
+        logger.error(f"Atualização de conta ID={id_conta}: tipo inválido '{tipo}'")
         return 400, "Tipo de conta inválido. Use 'corrente' ou 'poupança'."
 
     if saldo is not None:
         if not isinstance(saldo, (int, float)) or saldo < 0:
-            logger.warning(f"Atualização de conta ID={id_conta}: saldo inválido '{saldo}'")
+            logger.error(f"Atualização de conta ID={id_conta}: saldo inválido '{saldo}'")
             return 400, "Saldo inválido. Deve ser um valor numérico não negativo."
 
     # Aplicar alterações
