@@ -1,7 +1,7 @@
 import json
 import os
 
-from utils import gerar_id_banco, validar_email
+from utils import gerar_id_banco, validar_email, logger
 
 FICHEIRO_BANCOS = "bancos.json"
 
@@ -31,9 +31,11 @@ def criar_banco(nome, email, morada, telefone):
     carregar_bancos()
 
     if not validar_email(email):
+        logger.warning(f"Tentativa de criar banco com email inválido: '{email}'")
         return 400, "Email inválido."
 
     if any(b["email"] == email for b in bancos.values()):
+        logger.warning(f"Tentativa de criar banco com email já registado: '{email}'")
         return 409, "Email já registado."
 
     id_banco = gerar_id_banco()
@@ -48,6 +50,7 @@ def criar_banco(nome, email, morada, telefone):
 
     bancos[id_banco] = banco
     guardar_bancos()
+    logger.info(f"Banco criado: ID={id_banco} | Nome={nome} | Email={email}")
     return 201, banco
 
 
@@ -56,7 +59,9 @@ def listar_bancos():
     carregar_bancos()
 
     if not bancos:
+        logger.debug("Listagem de bancos: nenhum registo encontrado.")
         return 404, "Não existem bancos registados."
+    logger.debug(f"Listagem de bancos: {len(bancos)} registo(s) encontrado(s).")
     return 200, bancos
 
 
@@ -64,7 +69,9 @@ def consultar_banco(id_banco):
     carregar_bancos()
 
     if id_banco not in bancos:
+        logger.warning(f"Consulta de banco falhou: ID '{id_banco}' não encontrado.")
         return 404, "Banco não encontrado."
+    logger.info(f"Banco consultado: ID={id_banco}")
     return 200, {id_banco: bancos[id_banco]}
 
 
@@ -73,13 +80,16 @@ def atualizar_banco(id_banco, nome=None, email=None, morada=None, telefone=None)
     carregar_bancos()
 
     if id_banco not in bancos:
+        logger.warning(f"Tentativa de atualizar banco inexistente: ID '{id_banco}'")
         return 404, "Banco não encontrado."
 
     if email:
         if not validar_email(email):
+            logger.warning(f"Atualização de banco ID={id_banco}: email inválido '{email}'")
             return 400, "Email inválido."
 
         if any(b["email"] == email and b["id"] != id_banco for b in bancos.values()):
+            logger.warning(f"Atualização de banco ID={id_banco}: email já registado '{email}'")
             return 409, "Email já registado."
 
     if nome:
@@ -95,6 +105,7 @@ def atualizar_banco(id_banco, nome=None, email=None, morada=None, telefone=None)
         bancos[id_banco]["telefone"] = telefone
 
     guardar_bancos()
+    logger.info(f"Banco atualizado: ID={id_banco}")
     return 200, bancos[id_banco]
 
 
@@ -103,11 +114,12 @@ def remover_banco(id_banco):
     carregar_bancos()
 
     if id_banco not in bancos:
+        logger.warning(f"Tentativa de remover banco inexistente: ID '{id_banco}'")
         return 404, "Banco não encontrado."
 
     del bancos[id_banco]
     guardar_bancos()
-
+    logger.info(f"Banco removido: ID={id_banco}")
     return 200, f"Banco {id_banco} removido."
 
 
