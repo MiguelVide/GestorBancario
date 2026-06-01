@@ -1,403 +1,544 @@
-import bancario
-from bancario import (
-    criar_bancario,
-    listar_bancarios,
-    consultar_bancario,
-    atualizar_bancario,
-    remover_bancario
-)
+import tkinter as tk
+from tkinter import ttk, messagebox
 
-from cliente import (
-    criar_cliente,
-    listar_clientes,
-    consultar_cliente,
-    atualizar_cliente,
-    remover_cliente
-)
+from bancario import criar_bancario, listar_bancarios, consultar_bancario, atualizar_bancario, remover_bancario
+from cliente import criar_cliente, listar_clientes, consultar_cliente, atualizar_cliente, remover_cliente
+from banco import criar_banco, listar_bancos, consultar_banco, atualizar_banco, remover_banco
+from conta_bancaria import criar_conta, listar_contas, consultar_conta, atualizar_conta, remover_conta
 
-from banco import (
-    criar_banco,
-    listar_bancos,
-    consultar_banco,
-    atualizar_banco,
-    remover_banco,
-    existe_banco
-)
+# ──────────────────────────────────────────────
+# Paleta
+# ──────────────────────────────────────────────
+BG        = "#0f1117"
+PANEL     = "#1a1d27"
+CARD      = "#22263a"
+ACCENT    = "#4f8ef7"
+ACCENT2   = "#34d399"
+DANGER    = "#f87171"
+TXT       = "#e8eaf0"
+TXT_DIM   = "#6b7280"
+BORDER    = "#2e3250"
+FONT_TITLE = ("Consolas", 22, "bold")
+FONT_SUB   = ("Consolas", 11, "bold")
+FONT_BODY  = ("Consolas", 10)
+FONT_BTN   = ("Consolas", 10, "bold")
 
-from conta_bancaria import (
-    criar_conta,
-    listar_contas,
-    consultar_conta,
-    atualizar_conta,
-    remover_conta
-)
+# ──────────────────────────────────────────────
+# Helpers visuais
+# ──────────────────────────────────────────────
+def styled_btn(parent, text, cmd, color=ACCENT, fg=BG, **kw):
+    b = tk.Button(parent, text=text, command=cmd,
+                  bg=color, fg=fg, font=FONT_BTN,
+                  relief="flat", cursor="hand2", padx=10, pady=4, **kw)
+    b.bind("<Enter>", lambda e: b.config(bg=_lighten(color)))
+    b.bind("<Leave>", lambda e: b.config(bg=color))
+    return b
 
-from utils import logger
+def _lighten(hex_color):
+    r, g, b = int(hex_color[1:3],16), int(hex_color[3:5],16), int(hex_color[5:7],16)
+    return f"#{min(255,r+30):02x}{min(255,g+30):02x}{min(255,b+30):02x}"
 
-# ==============================
-# MENUS
-# ==============================
-def menu_principal():
-    print("\n===== MENU PRINCIPAL =====")
-    print("1 - Gerir Bancários")
-    print("2 - Gerir Clientes")
-    print("3 - Gerir Bancos")
-    print("4 - Gerir Contas Bancárias")
-    print("0 - Sair")
+def make_tree(parent, columns, col_names, heights=12):
+    style = ttk.Style()
+    style.theme_use("clam")
+    style.configure("Custom.Treeview",
+        background=PANEL, foreground=TXT, fieldbackground=PANEL,
+        rowheight=24, font=FONT_BODY, borderwidth=0)
+    style.configure("Custom.Treeview.Heading",
+        background=CARD, foreground=ACCENT, font=FONT_SUB, relief="flat")
+    style.map("Custom.Treeview", background=[("selected", ACCENT)])
+    style.configure("Custom.TCombobox", fieldbackground=PANEL, background=PANEL,
+                    foreground=TXT, selectbackground=ACCENT)
 
+    frame = tk.Frame(parent, bg=BG)
+    tree = ttk.Treeview(frame, columns=columns, show="headings",
+                        height=heights, style="Custom.Treeview")
+    for c, n in zip(columns, col_names):
+        tree.heading(c, text=n)
+        tree.column(c, width=130, anchor="w")
+    sb = ttk.Scrollbar(frame, orient="vertical", command=tree.yview)
+    tree.configure(yscrollcommand=sb.set)
+    tree.pack(side="left", fill="both", expand=True)
+    sb.pack(side="right", fill="y")
+    return frame, tree
 
-def menu_bancarios():
-    print("\n===== MENU BANCÁRIO =====")
-    print("1 - Criar bancário")
-    print("2 - Listar bancários")
-    print("3 - Consultar bancário")
-    print("4 - Atualizar bancário")
-    print("5 - Remover bancário")
-    print("0 - Voltar")
+# ──────────────────────────────────────────────
+# Helpers para carregar opções de dropdowns
+# ──────────────────────────────────────────────
+def _opcoes_bancarios():
+    code, data = listar_bancarios()
+    if code != 200:
+        return []
+    return [f"{id_} — {d['nome']}" for id_, d in data.items()]
 
+def _opcoes_clientes():
+    code, data = listar_clientes()
+    if code != 200:
+        return []
+    return [f"{id_} — {d['nome']}" for id_, d in data.items()]
 
-def menu_clientes():
-    print("\n===== MENU CLIENTE =====")
-    print("1 - Criar cliente")
-    print("2 - Listar clientes")
-    print("3 - Consultar cliente")
-    print("4 - Atualizar cliente")
-    print("5 - Remover cliente")
-    print("0 - Voltar")
+def _opcoes_bancos():
+    code, data = listar_bancos()
+    if code != 200:
+        return []
+    return [f"{id_} — {d['nome']}" for id_, d in data.items()]
 
+def _id_de_opcao(opcao):
+    """Extrai o ID da string 'B001 — Nome'"""
+    return opcao.split(" — ")[0].strip() if opcao else ""
 
-def menu_bancos():
-    print("\n===== MENU BANCO =====")
-    print("1 - Criar banco")
-    print("2 - Listar bancos")
-    print("3 - Consultar banco")
-    print("4 - Atualizar banco")
-    print("5 - Remover banco")
-    print("0 - Voltar")
+# ══════════════════════════════════════════════
+# FormDialog — suporta Entry e Combobox
+#
+# fields = lista de dicts:
+#   {"key": str, "label": str, "type": "entry"|"combo", "options_fn": callable}
+# ══════════════════════════════════════════════
+class FormDialog(tk.Toplevel):
+    def __init__(self, parent, title, fields, on_submit, defaults=None):
+        super().__init__(parent)
+        self.title(title)
+        self.configure(bg=BG)
+        self.resizable(False, False)
+        self.grab_set()
 
+        tk.Label(self, text=title, bg=BG, fg=ACCENT, font=FONT_SUB).pack(pady=(14,6))
 
-def menu_contas():
-    print("\n===== MENU CONTA BANCÁRIA =====")
-    print("1 - Criar conta")
-    print("2 - Listar contas")
-    print("3 - Consultar conta")
-    print("4 - Atualizar conta")
-    print("5 - Remover conta")
-    print("0 - Voltar")
+        card = tk.Frame(self, bg=CARD, padx=16, pady=12)
+        card.pack(padx=20, pady=(0,12), fill="x")
+        card.columnconfigure(1, weight=1)
 
+        self.vars = {}      # key -> StringVar
+        self._combos = {}   # key -> Combobox (para atualizar opções)
 
-# ==============================
-# FUNÇÃO AUXILIAR (NOVA)
-# ==============================
-def mostrar_opcoes_ids(dados, tipo):
-    print(f"\n--- {tipo} disponíveis ---")
-    for id_, info in dados.items():
-        print(f"ID: {id_} | Nome: {info['nome']}")
-    print("--------------------------\n")
+        for i, f in enumerate(fields):
+            key    = f["key"]
+            label  = f["label"]
+            ftype  = f.get("type", "entry")
+            default = (defaults or {}).get(key, "")
 
+            tk.Label(card, text=label, bg=CARD, fg=TXT_DIM,
+                     font=FONT_BODY).grid(row=i, column=0, sticky="w",
+                                          padx=(10,6), pady=3)
 
-# ==============================
-# BANCÁRIOS
-# ==============================
-def gerir_bancarios():
-    logger.debug("Acesso ao menu de bancários.")
-    while True:
-        menu_bancarios()
-        opcao = input("Escolha uma opção: ")
+            var = tk.StringVar(value=default)
+            self.vars[key] = var
 
-        if opcao == "1":
-            nome = input("Nome: ")
-            nif = input("NIF: ")
-            email = input("Email: ")
-            morada = input("Morada: ")
-            data_nascimento = input("Data nascimento (YYYY-MM-DD): ")
+            if ftype == "combo":
+                options_fn = f.get("options_fn", lambda: [])
+                opts = options_fn()
+                cb = ttk.Combobox(card, textvariable=var, values=opts,
+                                  state="readonly", font=FONT_BODY, width=26)
+                # Se default é um ID simples, tenta mostrar a opção correspondente
+                if default and not " — " in default:
+                    match = next((o for o in opts if o.startswith(default)), "")
+                    var.set(match)
+                cb.grid(row=i, column=1, padx=(0,10), pady=3, sticky="ew")
+                self._combos[key] = cb
+            else:
+                e = tk.Entry(card, textvariable=var, bg=PANEL, fg=TXT,
+                             insertbackground=TXT, relief="flat",
+                             font=FONT_BODY, width=28)
+                e.grid(row=i, column=1, padx=(0,10), pady=3, sticky="ew")
 
-            code, obj = criar_bancario(nome, nif, email, morada, data_nascimento)
+        btns = tk.Frame(self, bg=BG)
+        btns.pack(pady=(0,14))
+        styled_btn(btns, "💾  Guardar", lambda: self._submit(on_submit),
+                   color=ACCENT2, fg=BG).pack(side="left", padx=6)
+        styled_btn(btns, "Cancelar", self.destroy,
+                   color=PANEL, fg=TXT).pack(side="left", padx=6)
 
-            print("✔ Criado" if code == 201 else "Erro:", obj)
+        self.center()
 
-        elif opcao == "2":
-            code, obj = listar_bancarios()
+    def center(self):
+        self.update_idletasks()
+        w, h = self.winfo_width(), self.winfo_height()
+        x = (self.winfo_screenwidth()  - w) // 2
+        y = (self.winfo_screenheight() - h) // 2
+        self.geometry(f"+{x}+{y}")
 
+    def _submit(self, on_submit):
+        # Para campos combo, extrai só o ID
+        data = {}
+        for k, var in self.vars.items():
+            val = var.get().strip()
+            if k in self._combos:
+                val = _id_de_opcao(val)
+            data[k] = val
+
+        ok, msg = on_submit(data)
+        if ok:
+            messagebox.showinfo("Sucesso", msg)
+            self.destroy()
+        else:
+            messagebox.showerror("Erro", str(msg))
+
+# ══════════════════════════════════════════════
+# BaseTab
+# ══════════════════════════════════════════════
+class BaseTab(tk.Frame):
+    def __init__(self, parent, title):
+        super().__init__(parent, bg=BG)
+        tk.Label(self, text=title, bg=BG, fg=ACCENT,
+                 font=FONT_TITLE).pack(pady=(18,8), padx=20, anchor="w")
+        tk.Frame(self, bg=BORDER, height=1).pack(fill="x", padx=20, pady=(0,12))
+
+        main = tk.Frame(self, bg=BG)
+        main.pack(fill="both", expand=True, padx=20)
+        main.columnconfigure(0, weight=3)
+        main.columnconfigure(1, weight=1)
+
+        self.tree_frame, self.tree = self._make_tree(main)
+        self.tree_frame.grid(row=0, column=0, sticky="nsew", padx=(0,12))
+        self.tree.bind("<<TreeviewSelect>>", self._on_select)
+
+        btn_panel = tk.Frame(main, bg=PANEL, padx=12, pady=12)
+        btn_panel.grid(row=0, column=1, sticky="nsew")
+        for text, cmd, color in [
+            ("➕  Criar",   self.open_create, ACCENT2),
+            ("✏️  Editar",  self.open_edit,   ACCENT),
+            ("🗑  Remover", self.do_remove,   DANGER),
+            ("🔄  Refresh", self.refresh,     TXT_DIM),
+        ]:
+            styled_btn(btn_panel, text, cmd, color=color,
+                       fg=BG if color != TXT_DIM else TXT,
+                       width=16).pack(fill="x", pady=4)
+
+        self.selected_id = None
+        self.refresh()
+
+    def _make_tree(self, parent): raise NotImplementedError
+    def refresh(self):            raise NotImplementedError
+    def open_create(self):        raise NotImplementedError
+    def _open_edit_dialog(self, rid): raise NotImplementedError
+    def _remove(self, rid):       raise NotImplementedError
+
+    def _on_select(self, _=None):
+        sel = self.tree.selection()
+        self.selected_id = self.tree.item(sel[0])["values"][0] if sel else None
+
+    def open_edit(self):
+        if not self.selected_id:
+            messagebox.showwarning("Aviso", "Seleciona um registo primeiro.")
+            return
+        self._open_edit_dialog(self.selected_id)
+
+    def do_remove(self):
+        if not self.selected_id:
+            messagebox.showwarning("Aviso", "Seleciona um registo primeiro.")
+            return
+        if messagebox.askyesno("Confirmar", f"Remover '{self.selected_id}'?"):
+            self._remove(self.selected_id)
+            self.refresh()
+
+    def _clear_tree(self):
+        for row in self.tree.get_children():
+            self.tree.delete(row)
+
+# ══════════════════════════════════════════════
+# TAB BANCÁRIOS  (sem IDs externos)
+# ══════════════════════════════════════════════
+class TabBancarios(BaseTab):
+    FIELDS = [
+        {"key": "nome",            "label": "Nome"},
+        {"key": "nif",             "label": "NIF"},
+        {"key": "email",           "label": "Email"},
+        {"key": "morada",          "label": "Morada"},
+        {"key": "data_nascimento", "label": "Data Nasc. (YYYY-MM-DD)"},
+    ]
+
+    def __init__(self, parent):
+        super().__init__(parent, "👤  Bancários")
+
+    def _make_tree(self, parent):
+        return make_tree(parent,
+            ("id","nome","nif","email","morada","data_nascimento"),
+            ("ID","Nome","NIF","Email","Morada","Data Nasc."))
+
+    def refresh(self):
+        self._clear_tree()
+        code, data = listar_bancarios()
+        if code == 200:
+            for d in data.values():
+                self.tree.insert("", "end", values=(
+                    d["id"], d["nome"], d["nif"],
+                    d["email"], d["morada"], d["data_nascimento"]))
+
+    def open_create(self):
+        def submit(data):
+            code, obj = criar_bancario(data["nome"], data["nif"], data["email"],
+                                       data["morada"], data["data_nascimento"])
+            if code == 201:
+                self.refresh()
+                return True, f"Bancário criado: {obj['id']}"
+            return False, obj
+        FormDialog(self, "Criar Bancário", self.FIELDS, submit)
+
+    def _open_edit_dialog(self, rid):
+        _, raw = consultar_bancario(rid)
+        d = raw[rid]
+        defaults = {f["key"]: d.get(f["key"], "") for f in self.FIELDS}
+        def submit(data):
+            code, obj = atualizar_bancario(rid,
+                data["nome"] or None, data["nif"] or None,
+                data["email"] or None, data["morada"] or None,
+                data["data_nascimento"] or None)
             if code == 200:
-                for id_b, d in obj.items():
-                    print(f"{id_b} | {d['nome']} | {d['email']}")
-            else:
-                print(obj)
+                self.refresh()
+                return True, "Bancário atualizado."
+            return False, obj
+        FormDialog(self, "Editar Bancário", self.FIELDS, submit, defaults)
 
-        elif opcao == "3":
-            bancarios = listar_bancarios()[1]
-            if isinstance(bancarios, dict):
-                mostrar_opcoes_ids(bancarios, "Bancários")
+    def _remove(self, rid):
+        remover_bancario(rid)
 
-            id_b = input("ID do bancário: ")
-            code, obj = consultar_bancario(id_b)
-            print(obj)
+# ══════════════════════════════════════════════
+# TAB CLIENTES  (bancario_id → Combobox)
+# ══════════════════════════════════════════════
+class TabClientes(BaseTab):
+    FIELDS = [
+        {"key": "nome",            "label": "Nome"},
+        {"key": "nif",             "label": "NIF"},
+        {"key": "email",           "label": "Email"},
+        {"key": "morada",          "label": "Morada"},
+        {"key": "trabalho",        "label": "Trabalho"},
+        {"key": "data_nascimento", "label": "Data Nasc. (YYYY-MM-DD)"},
+        {"key": "bancario_id",     "label": "Bancário responsável",
+         "type": "combo", "options_fn": _opcoes_bancarios},
+    ]
 
-        elif opcao == "4":
-            bancarios = listar_bancarios()[1]
-            if isinstance(bancarios, dict):
-                mostrar_opcoes_ids(bancarios, "Bancários")
+    def __init__(self, parent):
+        super().__init__(parent, "🧑‍💼  Clientes")
 
-            id_b = input("ID do bancário: ")
+    def _make_tree(self, parent):
+        return make_tree(parent,
+            ("id","nome","nif","email","trabalho","bancario_id"),
+            ("ID","Nome","NIF","Email","Trabalho","Bancário"))
 
-            nome = input("Nome: ")
-            nif = input("NIF: ")
-            email = input("Email: ")
-            morada = input("Morada: ")
-            data_nascimento = input("Data nascimento: ")
+    def refresh(self):
+        self._clear_tree()
+        code, data = listar_clientes()
+        if code == 200:
+            for d in data.values():
+                self.tree.insert("", "end", values=(
+                    d["id"], d["nome"], d["nif"],
+                    d["email"], d.get("trabalho",""),
+                    d.get("bancario_id","")))
 
-            code, obj = atualizar_bancario(
-                id_b,
-                nome or None,
-                nif or None,
-                email or None,
-                morada or None,
-                data_nascimento or None
-            )
+    def open_create(self):
+        def submit(data):
+            code, obj = criar_cliente(
+                data["nome"], data["nif"], data["email"],
+                data["morada"], data["trabalho"],
+                data["data_nascimento"], data["bancario_id"])
+            if code == 201:
+                self.refresh()
+                return True, f"Cliente criado: {obj['id']}"
+            return False, obj
+        FormDialog(self, "Criar Cliente", self.FIELDS, submit)
 
-            print(obj)
+    def _open_edit_dialog(self, rid):
+        _, raw = consultar_cliente(rid)
+        d = raw[rid]
+        defaults = {f["key"]: d.get(f["key"], "") for f in self.FIELDS}
+        def submit(data):
+            code, obj = atualizar_cliente(rid,
+                data["nome"] or None, data["nif"] or None,
+                data["email"] or None, data["morada"] or None,
+                data["trabalho"] or None,
+                data["data_nascimento"] or None,
+                data["bancario_id"] or None)
+            if code == 200:
+                self.refresh()
+                return True, "Cliente atualizado."
+            return False, obj
+        FormDialog(self, "Editar Cliente", self.FIELDS, submit, defaults)
 
-        elif opcao == "5":
-            bancarios = listar_bancarios()[1]
-            if isinstance(bancarios, dict):
-                mostrar_opcoes_ids(bancarios, "Bancários")
+    def _remove(self, rid):
+        remover_cliente(rid)
 
-            id_b = input("ID do bancário: ")
-            print(remover_bancario(id_b)[1])
+# ══════════════════════════════════════════════
+# TAB BANCOS  (sem IDs externos)
+# ══════════════════════════════════════════════
+class TabBancos(BaseTab):
+    FIELDS = [
+        {"key": "nome",     "label": "Nome"},
+        {"key": "email",    "label": "Email"},
+        {"key": "morada",   "label": "Morada"},
+        {"key": "telefone", "label": "Telefone"},
+    ]
 
-        elif opcao == "0":
-            logger.debug("Saída do menu de bancários.")
-            break
+    def __init__(self, parent):
+        super().__init__(parent, "🏦  Bancos")
 
+    def _make_tree(self, parent):
+        return make_tree(parent,
+            ("id","nome","email","morada","telefone"),
+            ("ID","Nome","Email","Morada","Telefone"))
 
-# ==============================
-# CLIENTES
-# ==============================
-def gerir_clientes():
-    logger.debug("Acesso ao menu de clientes.")
-    while True:
-        menu_clientes()
-        opcao = input("Escolha uma opção: ")
+    def refresh(self):
+        self._clear_tree()
+        code, data = listar_bancos()
+        if code == 200:
+            for d in data.values():
+                self.tree.insert("", "end", values=(
+                    d["id"], d["nome"], d["email"],
+                    d["morada"], d["telefone"]))
 
-        if opcao == "1":
-            bancarios = listar_bancarios()[1]
-            if isinstance(bancarios, dict):
-                mostrar_opcoes_ids(bancarios, "Bancários")
+    def open_create(self):
+        def submit(data):
+            code, obj = criar_banco(data["nome"], data["email"],
+                                    data["morada"], data["telefone"])
+            if code == 201:
+                self.refresh()
+                return True, f"Banco criado: {obj['id']}"
+            return False, obj
+        FormDialog(self, "Criar Banco", self.FIELDS, submit)
 
-            id_b = input("ID bancário responsável: ")
+    def _open_edit_dialog(self, rid):
+        _, raw = consultar_banco(rid)
+        d = raw[rid]
+        defaults = {f["key"]: d.get(f["key"], "") for f in self.FIELDS}
+        def submit(data):
+            code, obj = atualizar_banco(rid,
+                data["nome"] or None, data["email"] or None,
+                data["morada"] or None, data["telefone"] or None)
+            if code == 200:
+                self.refresh()
+                return True, "Banco atualizado."
+            return False, obj
+        FormDialog(self, "Editar Banco", self.FIELDS, submit, defaults)
 
-            nome = input("Nome: ")
-            nif = input("NIF: ")
-            email = input("Email: ")
-            morada = input("Morada: ")
-            trabalho = input("Trabalho: ")
-            data_nascimento = input("Data nascimento: ")
+    def _remove(self, rid):
+        remover_banco(rid)
 
-            print(criar_cliente(nome, nif, email, morada, trabalho, data_nascimento, id_b)[1])
+# ══════════════════════════════════════════════
+# TAB CONTAS  (id_cliente e id_banco → Combobox)
+# ══════════════════════════════════════════════
+class TabContas(BaseTab):
+    FIELDS = [
+        {"key": "tipo",       "label": "Tipo",
+         "type": "combo", "options_fn": lambda: ["corrente", "poupança"]},
+        {"key": "saldo",      "label": "Saldo Inicial"},
+        {"key": "id_cliente", "label": "Cliente",
+         "type": "combo", "options_fn": _opcoes_clientes},
+        {"key": "id_banco",   "label": "Banco",
+         "type": "combo", "options_fn": _opcoes_bancos},
+    ]
 
-        elif opcao == "2":
-            clientes = listar_clientes()[1]
+    def __init__(self, parent):
+        super().__init__(parent, "💳  Contas Bancárias")
 
-            if isinstance(clientes, dict):
-                for id_c, d in clientes.items():
-                    print(f"{id_c} | {d['nome']}")
-            else:
-                print(clientes)
+    def _make_tree(self, parent):
+        return make_tree(parent,
+            ("id","tipo","saldo","id_cliente","id_banco"),
+            ("ID","Tipo","Saldo","Cliente","Banco"))
 
-        elif opcao == "3":
-            clientes = listar_clientes()[1]
-            if isinstance(clientes, dict):
-                mostrar_opcoes_ids(clientes, "Clientes")
+    def refresh(self):
+        self._clear_tree()
+        code, data = listar_contas()
+        if code == 200:
+            for d in data.values():
+                self.tree.insert("", "end", values=(
+                    d["id"], d["tipo"], f"{d['saldo']:.2f}",
+                    d["id_cliente"], d["id_banco"]))
 
-            id_c = input("ID cliente: ")
-            print(consultar_cliente(id_c)[1])
+    def open_create(self):
+        def submit(data):
+            try:
+                saldo = float(data["saldo"])
+            except ValueError:
+                return False, "Saldo inválido."
+            code, obj = criar_conta(data["tipo"], saldo,
+                                    data["id_cliente"], data["id_banco"])
+            if code == 201:
+                self.refresh()
+                return True, f"Conta criada: {obj['id']}"
+            return False, obj
+        FormDialog(self, "Criar Conta", self.FIELDS, submit)
 
-        elif opcao == "4":
-            clientes = listar_clientes()[1]
-            if isinstance(clientes, dict):
-                mostrar_opcoes_ids(clientes, "Clientes")
+    def _open_edit_dialog(self, rid):
+        _, raw = consultar_conta(rid)
+        d = raw[rid]
+        defaults = {f["key"]: d.get(f["key"], "") for f in self.FIELDS}
+        defaults["saldo"] = str(d.get("saldo", ""))
+        def submit(data):
+            saldo = None
+            if data["saldo"]:
+                try:
+                    saldo = float(data["saldo"])
+                except ValueError:
+                    return False, "Saldo inválido."
+            code, obj = atualizar_conta(rid,
+                data["tipo"] or None, saldo,
+                data["id_cliente"] or None, data["id_banco"] or None)
+            if code == 200:
+                self.refresh()
+                return True, "Conta atualizada."
+            return False, obj
+        FormDialog(self, "Editar Conta", self.FIELDS, submit, defaults)
 
-            id_c = input("ID cliente: ")
+    def _remove(self, rid):
+        remover_conta(rid)
 
-            print(atualizar_cliente(
-                id_c,
-                input("Nome: ") or None,
-                input("NIF: ") or None,
-                input("Email: ") or None,
-                input("Morada: ") or None,
-                input("Trabalho: ") or None,
-                input("Data nascimento: ") or None,
-                input("ID bancário: ") or None
-            )[1])
+# ══════════════════════════════════════════════
+# APP PRINCIPAL
+# ══════════════════════════════════════════════
+class App(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Gestor Bancário")
+        self.geometry("1000x580")
+        self.configure(bg=BG)
+        self.minsize(800, 480)
 
-        elif opcao == "5":
-            clientes = listar_clientes()[1]
-            if isinstance(clientes, dict):
-                mostrar_opcoes_ids(clientes, "Clientes")
+        sidebar = tk.Frame(self, bg=PANEL, width=170)
+        sidebar.pack(side="left", fill="y")
+        sidebar.pack_propagate(False)
 
-            id_c = input("ID cliente: ")
-            print(remover_cliente(id_c)[1])
+        tk.Label(sidebar, text="🏛  BANCO", bg=PANEL, fg=ACCENT,
+                 font=("Consolas", 14, "bold")).pack(pady=(24,4))
+        tk.Label(sidebar, text="Gestor CRUD", bg=PANEL, fg=TXT_DIM,
+                 font=("Consolas", 8)).pack(pady=(0,24))
+        tk.Frame(sidebar, bg=BORDER, height=1).pack(fill="x", padx=16, pady=(0,16))
 
-        elif opcao == "0":
-            logger.debug("Saída do menu de clientes.")
-            break
+        content = tk.Frame(self, bg=BG)
+        content.pack(side="left", fill="both", expand=True)
 
+        self.tabs = {}
+        self.tab_frames = {}
+        self.active_btn = None
 
-# ==============================
-# BANCOS
-# ==============================
-def gerir_bancos():
-    logger.debug("Acesso ao menu de bancos.")
-    while True:
-        menu_bancos()
-        opcao = input("Escolha uma opção: ")
+        for label, key, TabClass in [
+            ("👤  Bancários", "bancarios", TabBancarios),
+            ("🧑‍💼  Clientes",  "clientes",  TabClientes),
+            ("🏦  Bancos",     "bancos",     TabBancos),
+            ("💳  Contas",     "contas",     TabContas),
+        ]:
+            frame = TabClass(content)
+            frame.place(relx=0, rely=0, relwidth=1, relheight=1)
+            self.tab_frames[key] = frame
 
-        if opcao == "1":
-            nome = input("Nome: ")
-            email = input("Email: ")
-            morada = input("Morada: ")
-            telefone = input("Telefone: ")
+            btn = tk.Button(sidebar, text=label, bg=PANEL, fg=TXT,
+                            font=FONT_BODY, relief="flat", anchor="w",
+                            padx=16, pady=8, cursor="hand2",
+                            command=lambda k=key: self.show_tab(k))
+            btn.pack(fill="x")
+            self.tabs[key] = btn
 
-            print(criar_banco(nome, email, morada, telefone)[1])
+        self.show_tab("bancarios")
 
-        elif opcao == "2":
-            bancos = listar_bancos()[1]
-            if isinstance(bancos, dict):
-                for id_b, d in bancos.items():
-                    print(f"{id_b} | {d['nome']}")
-            else:
-                print(bancos)
+        tk.Frame(sidebar, bg=BORDER, height=1).pack(fill="x", padx=16, pady=16)
+        tk.Label(sidebar, text="v1.1", bg=PANEL, fg=TXT_DIM,
+                 font=("Consolas", 8)).pack(side="bottom", pady=12)
 
-        elif opcao == "3":
-            bancos = listar_bancos()[1]
-            if isinstance(bancos, dict):
-                mostrar_opcoes_ids(bancos, "Bancos")
-
-            id_bn = input("ID banco: ")
-            print(consultar_banco(id_bn)[1])
-
-        elif opcao == "4":
-            bancos = listar_bancos()[1]
-            if isinstance(bancos, dict):
-                mostrar_opcoes_ids(bancos, "Bancos")
-
-            id_bn = input("ID banco: ")
-
-            print(atualizar_banco(
-                id_bn,
-                input("Nome: ") or None,
-                input("Email: ") or None,
-                input("Morada: ") or None,
-                input("Telefone: ") or None
-            )[1])
-
-        elif opcao == "5":
-            bancos = listar_bancos()[1]
-            if isinstance(bancos, dict):
-                mostrar_opcoes_ids(bancos, "Bancos")
-
-            id_bn = input("ID banco: ")
-            print(remover_banco(id_bn)[1])
-
-        elif opcao == "0":
-            logger.debug("Saída do menu de bancos.")
-            break
-
-
-# ==============================
-# CONTAS
-# ==============================
-def gerir_contas():
-    logger.debug("Acesso ao menu de contas bancárias.")
-    while True:
-        menu_contas()
-        opcao = input("Escolha uma opção: ")
-
-        if opcao == "1":
-            clientes = listar_clientes()[1]
-            if isinstance(clientes, dict):
-                mostrar_opcoes_ids(clientes, "Clientes")
-
-            id_c = input("ID cliente: ")
-
-            bancos = listar_bancos()[1]
-            if isinstance(bancos, dict):
-                mostrar_opcoes_ids(bancos, "Bancos")
-
-            id_b = input("ID banco: ")
-
-            tipo = input("Tipo: ")
-            saldo = float(input("Saldo: "))
-
-            print(criar_conta(tipo, saldo, id_c, id_b)[1])
-
-        elif opcao == "2":
-            contas = listar_contas()[1]
-
-            if isinstance(contas, dict):
-                for id_ct, d in contas.items():
-                    print(f"{id_ct} | {d['tipo']} | {d['saldo']}")
-            else:
-                print(contas)
-
-        elif opcao == "3":
-            contas = listar_contas()[1]
-            if isinstance(contas, dict):
-                mostrar_opcoes_ids(contas, "Contas")
-
-            id_ct = input("ID conta: ")
-            print(consultar_conta(id_ct)[1])
-
-        elif opcao == "4":
-            contas = listar_contas()[1]
-            if isinstance(contas, dict):
-                mostrar_opcoes_ids(contas, "Contas")
-
-            id_ct = input("ID conta: ")
-
-            print(atualizar_conta(
-                id_ct,
-                input("Tipo: ") or None,
-                input("Saldo: ") or None,
-                input("ID cliente: ") or None,
-                input("ID banco: ") or None
-            )[1])
-
-        elif opcao == "5":
-            contas = listar_contas()[1]
-            if isinstance(contas, dict):
-                mostrar_opcoes_ids(contas, "Contas")
-
-            id_ct = input("ID conta: ")
-            print(remover_conta(id_ct)[1])
-
-        elif opcao == "0":
-            logger.debug("Saída do menu de contas bancárias.")
-            break
-
-
-# ==============================
-# MAIN
-# ==============================
-def main():
-    logger.info("=== Sistema iniciado ===")
-    while True:
-        menu_principal()
-        opcao = input("Escolha: ")
-
-        if opcao == "1":
-            gerir_bancarios()
-        elif opcao == "2":
-            gerir_clientes()
-        elif opcao == "3":
-            gerir_bancos()
-        elif opcao == "4":
-            gerir_contas()
-        elif opcao == "0":
-            logger.info("=== Sistema encerrado pelo utilizador ===")
-            break
+    def show_tab(self, key):
+        if self.active_btn:
+            self.active_btn.config(bg=PANEL, fg=TXT)
+        self.tabs[key].config(bg=ACCENT, fg=BG)
+        self.active_btn = self.tabs[key]
+        self.tab_frames[key].lift()
 
 
 if __name__ == "__main__":
-    main()
+    app = App()
+    app.mainloop()
